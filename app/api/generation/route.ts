@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { ensureDatabase, prisma } from "@/lib/db";
 import { exportGenerationFile } from "@/lib/export-file";
 import { applicationProfileSchema } from "@/lib/schemas";
 import { z } from "zod";
@@ -22,6 +22,8 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });
   }
+
+  await ensureDatabase();
 
   const generation = await prisma.generation.create({
     data: {

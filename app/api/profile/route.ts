@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { ensureDatabase, prisma } from "@/lib/db";
 import { saveProfileSchema } from "@/lib/schemas";
 
 export async function POST(request: Request) {
@@ -12,6 +12,8 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });
   }
+
+  await ensureDatabase();
 
   const profile = parsed.data.profile;
   const studentName = profile.student.name;

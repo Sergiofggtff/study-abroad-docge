@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { ApplicationProfile } from "@/lib/schemas";
 
@@ -34,7 +35,9 @@ export async function exportGenerationFile({
   profile: ApplicationProfile;
   content: string;
 }) {
-  const outputsDir = path.join(process.cwd(), "outputs");
+  const outputsDir = process.env.VERCEL
+    ? path.join(os.tmpdir(), "study-abroad-docgen-outputs")
+    : path.join(process.cwd(), "outputs");
   await mkdir(outputsDir, { recursive: true });
 
   const student = safePart(profile.student.name, "student");

@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { ensureDatabase, prisma } from "@/lib/db";
 import { exportGenerationFile } from "@/lib/export-file";
 import { generateDocument, targetNameFromProfile } from "@/lib/generation";
 import { generateSchema } from "@/lib/schemas";
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     let generationId: string | undefined;
 
     if (profileId) {
+      await ensureDatabase();
       const generation = await prisma.generation.create({
         data: {
           profileId,

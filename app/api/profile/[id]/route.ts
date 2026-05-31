@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { ensureDatabase, prisma } from "@/lib/db";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -10,6 +10,8 @@ export async function GET(_request: Request, { params }: Params) {
   if (unauthorized) return unauthorized;
 
   const { id } = await params;
+  await ensureDatabase();
+
   const profile = await prisma.profile.findUnique({
     where: { id },
     include: {
