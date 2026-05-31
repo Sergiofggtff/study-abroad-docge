@@ -1,0 +1,44 @@
+import { requireAuth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { exportGenerationFile } from "@/lib/export-file";
+import { generateDocument, targetNameFromProfile } from "@/lib/generation";
+import { generateSchema } from "@/lib/schemas";
+
+export async function POST(request: Request) {
+  const unauthorized = await requireAuth();
+  if (unauthorized) return unauthorized;
+
+  const body = await request.json();
+  const parsed = generateSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return Response.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  try {
+    const { profile, profileId } = parsed.data;
+    const content = await generateDocument("cv", profile);
+    const filePath = await exportGenerationFile({ type: "cv", profile, content });
+    let generationId: string | undefined;
+
+    if (profileId) {
+      const generation = await prisma.generation.create({
+        data: {
+          profileId,
+          type: "cv",
+          targetName: targetNameFromProfile(profile),
+          input: profile,
+          content,
+        },
+      });
+      generationId = generation.id;
+    }
+
+    return Response.json({ content, generationId, filePath });
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "生成失败" },
+      { status: 500 },
+    );
+  }
+}
