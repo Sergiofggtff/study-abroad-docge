@@ -16,7 +16,8 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export function ensureDatabase() {
-  globalForPrisma.prismaReady ??= prisma.$executeRawUnsafe(`
+  globalForPrisma.prismaReady ??= Promise.all([
+    prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "Profile" (
       "id" TEXT NOT NULL PRIMARY KEY,
       "studentName" TEXT NOT NULL,
@@ -24,7 +25,8 @@ export function ensureDatabase() {
       "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-
+  `),
+    prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "Generation" (
       "id" TEXT NOT NULL PRIMARY KEY,
       "profileId" TEXT NOT NULL,
@@ -35,9 +37,11 @@ export function ensureDatabase() {
       "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT "Generation_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "Profile" ("id") ON DELETE CASCADE ON UPDATE CASCADE
     );
-
+  `),
+    prisma.$executeRawUnsafe(`
     CREATE INDEX IF NOT EXISTS "Generation_profileId_idx" ON "Generation"("profileId");
-  `).then(() => undefined);
+  `),
+  ]).then(() => undefined);
 
   return globalForPrisma.prismaReady;
 }
